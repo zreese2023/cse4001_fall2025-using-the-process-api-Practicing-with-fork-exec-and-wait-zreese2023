@@ -41,25 +41,48 @@ Use the Linux in your CSE4001 container. If you are using macOS, you may use the
 
 
 
-
-
-
-
-
 ---
 ### Questions
 1. Write a program that calls `fork()`. Before calling `fork()`, have the main process access a variable (e.g., x) and set its value to something (e.g., 100). What value is the variable in the child process? What happens to the variable when both the child and parent change the value of x?
 
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+int main() {
+        int value = 23;
+        printf("Before fork, value = %d\n", value);
+        pid_t pid = fork();
+
+        if (pid < 0) {
+                perror("fork failed");
+                return 1;
+        }
+        else if (pid == 0) {
+                printf("Child value = %d\n", value);
+                value = 100;
+                printf("Child changes value = %d\n", value);
+        } 
+        else {
+                printf("Parent value = %d\n", value);
+                value = 200;
+                printf("Child changes value = %d\n", value);
+        }
+        return 0
+}
 ```
+The child process sees the value of the parent process. When both change it, they are changed independently of each other since they are now separate processes. In my example, the child process
+changes the value to 100, and the parent process changes it to 200.
 
 
 2. Write a program that opens a file (with the `open()` system call) and then calls `fork()` to create a new process. Can both the child and parent access the file descriptor returned by `open()`? What happens when they are writing to the file concurrently, i.e., at the same time?
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+
 ```
 
 3. Write another program using `fork()`.The child process should print “hello”; the parent process should print “goodbye”. You should try to ensure that the child process always prints first; can you do this without calling `wait()` in the parent?
