@@ -88,31 +88,148 @@ changes the value to 100, and the parent process changes it to 200.
 3. Write another program using `fork()`.The child process should print “hello”; the parent process should print “goodbye”. You should try to ensure that the child process always prints first; can you do this without calling `wait()` in the parent?
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
-```
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdlib.h>
 
+int main() {
+
+        pid_t pid = fork();
+        if (pid < 0) {
+                perror("error");
+                exit(0);
+        }
+        if (pid == 0) {
+                printf("hello\n");
+        } else {
+                sleep(1);
+                printf("goodbye\n");
+        }
+        return 0;
+} 
+```
+Yes, we can use sleep() to do this, as seen in my code.
 
 4. Write a program that calls `fork()` and then calls some form of `exec()` to run the program `/bin/ls`. See if you can try all of the variants of `exec()`, including (on Linux) `execl()`, `execle()`, `execlp()`, `execv()`, `execvp()`, and `execvpe()`. Why do you think there are so many variants of the same basic call?
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+int main() {
+        pid_t pid = fork();
+        if (pid < 0) {
+                perror("error");
+        }
+        if (pid == 0) {
+                execl("/bin/ls", "ls", "-1", (char *)NULL);
+                perror("failed");
+                exit(1);
+        } else {
+                wait(NULL);
+        }
+        return 0;
+}
+// THis one uses execl, the other versions can be used to specify environments and such to run exec().
 ```
+
 
 5. Now write a program that uses `wait()` to wait for the child process to finish in the parent. What does `wait()` return? What happens if you use `wait()` in the child?
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+#include <stdio.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int main() {
+        pid_t pid = fork();
+        
+        if (pid < 0) {
+                perror("error");
+                exit(1);
+        }
+        if (pid == 0) {
+                printf("child\n");
+        } else {
+                wait(NULL);
+                printf("parent\n");
+        }
+        return 0;
+}
+// this uses wait() to wait for the cild process to finish before the parent is executed. wait() returns the pid of the child. If i use it in the child, it returns an error
 ```
 
 6. Write a slight modification of the previous program, this time using `waitpid()` instead of `wait()`. When would `waitpid()` be useful?
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+#include <stdio.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdio.h>
+
+int main() {
+        pid_t pid = fork();
+
+        if (pid < 0) {
+                perror("error");
+                exit(1);
+        }
+        if (pid == 0) {
+                printf("child\n");
+                exit(0);
+        } else {
+                int status;
+                pid_t wpid = waitpid(pid, &status, 0);
+                if (wpid == -1) {
+                        perror("wpid error");
+                }
+                if (WIFEXITED(status)) {
+                        printf("exit with code %d\n", WEXITSTATUS(status));
+                }
+        }
+}
+// waitpid() would be useful when we need the exit code for the child process.
 ```
 
 7. Write a program that creates a child process, and then in the child closes standard output (`STDOUT FILENO`). What happens if the child calls `printf()` to print some output after closing the descriptor?
 
 ```cpp
-// Add your code or answer here. You can also add screenshots showing your program's execution.  
+// Add your code or answer here. You can also add screenshots showing your program's execution.
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main() {
+        pid_t pid = fork();
+
+        if (pid < 0) {
+                perror("Error");
+                exit(1);
+        }
+        if (pid == 0) {
+                printf("Child process before closing stdout\n");
+                close(STDOUT_FILENO);
+                printf("Child after closing stdout\n");
+                exit(0);
+        } else {
+                printf("Parent waiting for child\n");
+                sleep(1);
+        }
+        return 0;
+}
+// in this code, the printf for the child process after closing stdout does not print at all, since it has nowhere to go.
 ```
 
